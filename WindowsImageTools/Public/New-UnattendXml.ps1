@@ -388,13 +388,13 @@ function New-UnattendXml {
                         }
                     }
                     if ($setting.'Pass' -eq 'specialize' -and $component.'Name' -eq 'Microsoft-Windows-Deployment' ) {
-                        if (($null -ne $FirstBootExecuteCommand -or $FirstBootExecuteCommand.Length -gt 0) -and $component.'processorArchitecture' -eq 'x86') {
-                            Write-Verbose -Message "[$($MyInvocation.MyCommand)] Adding first boot command(s)"
+                        if ($null -ne $FirstBootExecuteCommand -or $FirstBootExecuteCommand.Length -gt 0) {
+                            Write-Verbose -Message "[$($MyInvocation.MyCommand)] Adding first boot command(s) for $($component.'processorArchitecture') Architecture"
                             $commandOrder = 1
                             $runSynchronousElement = $component.AppendChild($unattendXml.CreateElement('RunSynchronous', 'urn:schemas-microsoft-com:unattend'))
-                            foreach ($synchronousCommand in ($FirstBootExecuteCommand | Sort-Object -Property {
-                                        $_.order
-                                    })) {
+                            foreach ($synchronousCommand in ($FirstBootExecuteCommand |
+                                                                Where-Object {!($_.'processorArchitecture') -or ($_.'processorArchitecture' = $component.'processorArchitecture')} |
+                                                                Sort-Object -Property { $_.order })) {
                                 $syncCommandElement = $runSynchronousElement.AppendChild($unattendXml.CreateElement('RunSynchronousCommand', 'urn:schemas-microsoft-com:unattend'))
                                 $null = $syncCommandElement.SetAttribute('action', 'http://schemas.microsoft.com/WMIConfig/2002/State', 'add')
                                 $syncCommandDescriptionElement = $syncCommandElement.AppendChild($unattendXml.CreateElement('Description', 'urn:schemas-microsoft-com:unattend'))
